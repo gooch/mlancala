@@ -1,0 +1,6 @@
+(executable
+ (public_name mancala)
+ (name main)
+ (modules main)
+ (libraries mancala)
+)

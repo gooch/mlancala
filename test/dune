@@ -1,0 +1,4 @@
+(test
+ (name test_mancala)
+ (libraries mancala ounit2)
+ )

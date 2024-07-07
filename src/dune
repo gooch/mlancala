@@ -1,5 +1,4 @@
 (library
-  (name mancala)
-  (public_name mancala)
-  (libraries)
- )
+ (name mancala)
+ (public_name mancala)
+ (libraries))

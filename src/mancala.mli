@@ -23,6 +23,7 @@ val player_store : point_of_view -> board -> store
 (* Function to print the current state of the board *)
 val print_board : board -> unit
 val opposite_pit : int -> int
+val capturable_pit : board -> int -> bool
 
 (* Function to handle a player's move by sowing seeds *)
 val sow_seeds : board -> int -> board

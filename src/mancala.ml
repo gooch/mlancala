@@ -73,6 +73,12 @@ let store_index point_of_view =
 let index_is_store index = index = 6 || index = 13
 let opposite_pit index = 12 - index
 
+let capturable_pit board index =
+  board.pits.(index) = 0
+  && ((board.player_turn = Player1 && index >= 0 && index < 6)
+      || (board.player_turn = Player2 && index >= 7 && index < 13))
+;;
+
 let rec distribute_seeds board index (seeds : int) =
   let point_of_view = board.player_turn in
   let new_index = (index + 1) mod 14 in
@@ -80,7 +86,7 @@ let rec distribute_seeds board index (seeds : int) =
   then if store_index point_of_view = index then board else change_player board
   else if index_is_store new_index && store_index point_of_view <> new_index
   then distribute_seeds board new_index seeds
-  else if board.pits.(new_index) = 0 && (not (index_is_store new_index)) && seeds = 1
+  else if capturable_pit board new_index && seeds = 1
   then (
     let new_store =
       board.pits.(store_index point_of_view) + board.pits.(opposite_pit new_index) + 1
@@ -117,13 +123,13 @@ let rec read_int prompt =
 
 let rec get_move board =
   Printf.printf
-    "%s, enter your move (pit index 0-5): "
+    "%s, enter your move (pit index 1-6): "
     (point_of_view_to_string board.player_turn);
   let selection = read_int "" in
-  if selection < 0
-  then 0
-  else if selection < 6
-  then selection
+  if selection < 1
+  then 1
+  else if selection <= 6
+  then selection - 1
   else (
     let () = Printf.printf "bad input\n" in
     get_move board)

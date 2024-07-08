@@ -71,6 +71,21 @@ let test_second_turn_capture _ =
   assert_equal new_board.player_turn Player2
 ;;
 
+let test_capturable_pit _ =
+  let board = init_board () in
+  board.pits.(3) <- 0;
+  board.pits.(7) <- 0;
+  assert (capturable_pit board 3);
+  assert (not (capturable_pit board 7))
+;;
+
+let test_empty_opponent_pit _ =
+  let board = init_board () in
+  board.pits.(7) <- 0;
+  let new_board = sow_seeds board 3 in
+  assert_equal (player_store Player1 new_board) 1
+;;
+
 let suite =
   "Mancala Tests"
   >::: [ "test_player_pits" >:: test_player_pits
@@ -84,6 +99,8 @@ let suite =
        ; "test_player_2_capture" >:: test_player_2_capture
        ; "test_second_turn" >:: test_second_turn
        ; "test_second_turn_capture" >:: test_second_turn_capture
+       ; "test_capturable_pit" >:: test_capturable_pit
+       ; "test_empty_opponent_pit" >:: test_empty_opponent_pit
        ]
 ;;
 

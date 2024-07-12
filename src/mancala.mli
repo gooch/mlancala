@@ -7,6 +7,19 @@ type point_of_view =
   | Player1
   | Player2
 
+type command =
+  | One
+  | Two
+  | Three
+  | Four
+  | Five
+  | Six
+  | Quit
+
+type valid_move =
+  | Some of int
+  | None
+
 type board =
   { pits : pit array
   ; player_turn : point_of_view
@@ -24,8 +37,10 @@ val player_store : point_of_view -> board -> store
 val print_board : board -> unit
 val opposite_pit : int -> int
 val capturable_pit : board -> int -> bool
+val win_condition : board -> bool
 
 (* Function to handle a player's move by sowing seeds *)
 val sow_seeds : board -> int -> board
 val distribute_seeds : board -> int -> int -> board
 val game_loop : board -> unit
+val read_character : unit -> string

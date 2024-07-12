@@ -11,6 +11,19 @@ type board =
   ; player_turn : point_of_view
   }
 
+type command =
+  | One
+  | Two
+  | Three
+  | Four
+  | Five
+  | Six
+  | Quit
+
+type valid_move =
+  | Some of int
+  | None
+
 let point_of_view_to_string = function
   | Player1 -> "Player 1"
   | Player2 -> "Player 2"
@@ -101,8 +114,9 @@ let rec distribute_seeds board index (seeds : int) =
     distribute_seeds board new_index new_seeds)
 ;;
 
-let sow_seeds board (index : int) =
-  let current_index : int =
+let sow_seeds board index =
+  Printf.printf "index: %d" index;
+  let current_index =
     match board.player_turn with
     | Player1 -> index
     | Player2 -> index + 7
@@ -112,32 +126,93 @@ let sow_seeds board (index : int) =
   distribute_seeds board current_index seeds
 ;;
 
-let rec read_int prompt =
-  Printf.printf "%s" prompt;
+let read_character () =
+  Printf.printf "> ";
   match read_line () with
-  | exception End_of_file -> 0
-  | line ->
-    (try int_of_string line with
-     | Failure _ -> read_int prompt)
+  | exception End_of_file -> failwith "err end of file"
+  | line -> line
 ;;
+
+let remaining_seeds board =
+  let a =
+    match board.player_turn with
+    | Player1 -> 0
+    | Player2 -> 7
+  in
+  Array.fold_left ( + ) 0 (Array.sub board.pits a 6)
+;;
+
+let win_condition board = remaining_seeds board == 0
 
 let rec get_move board =
   Printf.printf
     "%s, enter your move (pit index 1-6): "
     (point_of_view_to_string board.player_turn);
-  let selection = read_int "" in
-  if selection < 1
-  then 1
-  else if selection <= 6
-  then selection - 1
+  if win_condition board
+  then (
+    Printf.printf
+      "\n%s has no remaining moves.\n"
+      (point_of_view_to_string board.player_turn);
+    let other_player =
+      match board.player_turn with
+      | Player1 -> Player2
+      | Player2 -> Player1
+    in
+    let current_store = board.pits.(store_index other_player) in
+    board.pits.(store_index other_player)
+    <- current_store + remaining_seeds (change_player board);
+    print_board board;
+    Quit)
   else (
-    let () = Printf.printf "bad input\n" in
-    get_move board)
+    match read_character () with
+    | "1" -> One
+    | "2" -> Two
+    | "3" -> Three
+    | "4" -> Four
+    | "5" -> Five
+    | "6" -> Six
+    | "q" -> Quit
+    | _ -> get_move board)
+;;
+
+let valid_move cmd =
+  match cmd with
+  | One -> Some 0
+  | Two -> Some 1
+  | Three -> Some 2
+  | Four -> Some 3
+  | Five -> Some 4
+  | Six -> Some 5
+  | _ -> None
+;;
+
+let doable_move board index =
+  match index with
+  | Some i ->
+    let ii =
+      match board.player_turn with
+      | Player1 -> i
+      | Player2 -> i + 7
+    in
+    if board.pits.(ii) > 0
+    then Some i
+    else (
+      print_endline "That pit is empty";
+      None)
+  | None -> None
 ;;
 
 let rec game_loop board =
   print_board board;
-  let pit_index = get_move board in
-  let new_board = sow_seeds board pit_index in
-  game_loop new_board
+  let c = get_move board in
+  match c with
+  | Quit ->
+    print_endline "Bye.";
+    exit 0
+  | _ ->
+    (match doable_move board (valid_move c) with
+     | Some index ->
+       let new_board = sow_seeds board index in
+       game_loop new_board
+     | None -> game_loop board)
 ;;

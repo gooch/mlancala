@@ -86,6 +86,19 @@ let test_empty_opponent_pit _ =
   assert_equal (player_store Player1 new_board) 1
 ;;
 
+let test_win_condition _ =
+  let board = init_board () in
+  board.pits.(0) <- 0;
+  board.pits.(1) <- 0;
+  board.pits.(2) <- 0;
+  board.pits.(3) <- 0;
+  board.pits.(4) <- 0;
+  board.pits.(5) <- 0;
+  assert_equal (win_condition board) true;
+  board.pits.(5) <- 1;
+  assert_equal (win_condition board) false
+;;
+
 let suite =
   "Mancala Tests"
   >::: [ "test_player_pits" >:: test_player_pits
@@ -101,6 +114,7 @@ let suite =
        ; "test_second_turn_capture" >:: test_second_turn_capture
        ; "test_capturable_pit" >:: test_capturable_pit
        ; "test_empty_opponent_pit" >:: test_empty_opponent_pit
+       ; "test_win_condition" >:: test_win_condition
        ]
 ;;
 

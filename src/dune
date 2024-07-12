@@ -1,4 +1,5 @@
 (library
  (name mancala)
  (public_name mancala)
- (libraries))
+ (libraries)
+ (ocamlopt_flags -S))

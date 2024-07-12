@@ -2,4 +2,5 @@
  (public_name mancala)
  (name main)
  (modules main)
- (libraries mancala))
+ (libraries mancala)
+ (ocamlopt_flags -S))

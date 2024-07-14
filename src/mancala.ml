@@ -24,6 +24,10 @@ type valid_move =
   | Some of int
   | None
 
+type winner =
+  | Some of point_of_view
+  | None
+
 let point_of_view_to_string = function
   | Player1 -> "Player 1"
   | Player2 -> "Player 2"
@@ -144,6 +148,14 @@ let remaining_seeds board =
 
 let win_condition board = remaining_seeds board == 0
 
+let winning_player board =
+  if board.pits.(store_index Player1) > board.pits.(store_index Player2)
+  then Some Player1
+  else if board.pits.(store_index Player2) > board.pits.(store_index Player1)
+  then Some Player2
+  else None
+;;
+
 let rec get_move board =
   Printf.printf
     "%s, enter your move (pit index 1-6): "
@@ -162,6 +174,11 @@ let rec get_move board =
     board.pits.(store_index other_player)
     <- current_store + remaining_seeds (change_player board);
     print_board board;
+    let () =
+      match winning_player board with
+      | Some pov -> Printf.printf "%s wins!\n" (point_of_view_to_string pov)
+      | None -> Printf.printf "Draw. You're both losers."
+    in
     Quit)
   else (
     match read_character () with
@@ -175,7 +192,7 @@ let rec get_move board =
     | _ -> get_move board)
 ;;
 
-let valid_move cmd =
+let valid_move cmd : valid_move =
   match cmd with
   | One -> Some 0
   | Two -> Some 1
@@ -186,7 +203,7 @@ let valid_move cmd =
   | _ -> None
 ;;
 
-let doable_move board index =
+let doable_move board (index : valid_move) : valid_move =
   match index with
   | Some i ->
     let ii =

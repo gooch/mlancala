@@ -25,6 +25,10 @@ type board =
   ; player_turn : point_of_view
   }
 
+type winner =
+  | Some of point_of_view
+  | None
+
 val point_of_view_to_string : point_of_view -> string
 val change_player : board -> board
 
@@ -36,8 +40,11 @@ val player_store : point_of_view -> board -> store
 (* Function to print the current state of the board *)
 val print_board : board -> unit
 val opposite_pit : int -> int
+val doable_move : board -> valid_move -> valid_move
 val capturable_pit : board -> int -> bool
 val win_condition : board -> bool
+val winning_player : board -> winner
+val valid_move : command -> valid_move
 
 (* Function to handle a player's move by sowing seeds *)
 val sow_seeds : board -> int -> board

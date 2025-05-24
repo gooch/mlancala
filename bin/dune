@@ -1,6 +1,9 @@
 (executable
- (public_name mancala)
- (name main)
- (modules main)
- (libraries mancala)
- (ocamlopt_flags -S))
+ (name server)
+ (modules server)
+ (libraries mancala_lib unix))
+
+(executable
+ (name client)
+ (modules client)
+ (libraries mancala_lib unix))

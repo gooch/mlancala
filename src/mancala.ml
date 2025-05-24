@@ -11,19 +11,6 @@ type board =
   ; player_turn : point_of_view
   }
 
-type command =
-  | One
-  | Two
-  | Three
-  | Four
-  | Five
-  | Six
-  | Quit
-
-type valid_move =
-  | Some of int
-  | None
-
 type winner =
   | Some of point_of_view
   | None
@@ -96,45 +83,48 @@ let capturable_pit board index =
       || (board.player_turn = Player2 && index >= 7 && index < 13))
 ;;
 
-let rec distribute_seeds board index (seeds : int) =
+let rec distribute_seeds board pit_index seeds_to_sow =
   let point_of_view = board.player_turn in
-  let new_index = (index + 1) mod 14 in
-  if seeds = 0
-  then if store_index point_of_view = index then board else change_player board
-  else if index_is_store new_index && store_index point_of_view <> new_index
-  then distribute_seeds board new_index seeds
-  else if capturable_pit board new_index && seeds = 1
+  let new_pit_index = (pit_index + 1) mod 14 in
+  if seeds_to_sow = 0
+  then board (* Player change logic removed, handled by server *)
+  else if index_is_store new_pit_index && store_index point_of_view <> new_pit_index
+  then distribute_seeds board new_pit_index seeds_to_sow
+  else if capturable_pit board new_pit_index && seeds_to_sow = 1
   then (
-    let new_store =
-      board.pits.(store_index point_of_view) + board.pits.(opposite_pit new_index) + 1
+    (* Capture opponent's seeds *)
+    let new_store_total =
+      board.pits.(store_index point_of_view)
+      + board.pits.(opposite_pit new_pit_index)
+      + 1 (* the capturing seed *)
     in
-    board.pits.(store_index point_of_view) <- new_store;
-    board.pits.(opposite_pit new_index) <- 0;
-    board)
+    board.pits.(store_index point_of_view) <- new_store_total;
+    board.pits.(opposite_pit new_pit_index) <- 0;
+    board.pits.(new_pit_index) <- 0; (* Clear the capturing pit *)
+    board (* Return board, player change logic removed *)
+    )
   else (
-    let new_seeds = seeds - 1 in
-    let pit_seeds = board.pits.(new_index) + 1 in
-    board.pits.(new_index) <- pit_seeds;
-    distribute_seeds board new_index new_seeds)
+    (* Continue sowing *)
+    let remaining_seeds_to_sow = seeds_to_sow - 1 in
+    board.pits.(new_pit_index) <- board.pits.(new_pit_index) + 1;
+    distribute_seeds board new_pit_index remaining_seeds_to_sow)
 ;;
 
-let sow_seeds board index =
-  Printf.printf "index: %d" index;
-  let current_index =
+let sow_seeds board move_index =
+  (* move_index is 0-5 for the current player *)
+  let actual_pit_index =
     match board.player_turn with
-    | Player1 -> index
-    | Player2 -> index + 7
+    | Player1 -> move_index
+    | Player2 -> move_index + 7
   in
-  let seeds = board.pits.(current_index) in
-  board.pits.(current_index) <- 0;
-  distribute_seeds board current_index seeds
-;;
-
-let read_character () =
-  Printf.printf "> ";
-  match read_line () with
-  | exception End_of_file -> failwith "err end of file"
-  | line -> line
+  let seeds_to_sow = board.pits.(actual_pit_index) in
+  board.pits.(actual_pit_index) <- 0;
+  let final_board = distribute_seeds board actual_pit_index seeds_to_sow in
+  (* Determine if player gets another turn *)
+  let last_sown_pit = (actual_pit_index + seeds_to_sow) mod 14 in
+  if last_sown_pit = store_index board.player_turn
+  then final_board (* Player landed in their own store, gets another turn *)
+  else change_player final_board (* Otherwise, change player *)
 ;;
 
 let remaining_seeds board =
@@ -156,80 +146,14 @@ let winning_player board =
   else None
 ;;
 
-let rec get_move board =
-  Printf.printf
-    "%s, enter your move (pit index 1-6): "
-    (point_of_view_to_string board.player_turn);
-  if win_condition board
-  then (
-    Printf.printf
-      "\n%s has no remaining moves.\n"
-      (point_of_view_to_string board.player_turn);
-    let other_player =
-      match board.player_turn with
-      | Player1 -> Player2
-      | Player2 -> Player1
-    in
-    let current_store = board.pits.(store_index other_player) in
-    board.pits.(store_index other_player)
-    <- current_store + remaining_seeds (change_player board);
-    print_board board;
-    let () =
-      match winning_player board with
-      | Some pov -> Printf.printf "%s wins!\n" (point_of_view_to_string pov)
-      | None -> Printf.printf "Draw. You're both losers."
-    in
-    Quit)
-  else (
-    match read_character () with
-    | "1" -> One
-    | "2" -> Two
-    | "3" -> Three
-    | "4" -> Four
-    | "5" -> Five
-    | "6" -> Six
-    | "q" -> Quit
-    | _ -> get_move board)
-;;
-
-let valid_move cmd : valid_move =
-  match cmd with
-  | One -> Some 0
-  | Two -> Some 1
-  | Three -> Some 2
-  | Four -> Some 3
-  | Five -> Some 4
-  | Six -> Some 5
-  | _ -> None
-;;
-
-let doable_move board (index : valid_move) : valid_move =
-  match index with
-  | Some i ->
-    let ii =
-      match board.player_turn with
-      | Player1 -> i
-      | Player2 -> i + 7
-    in
-    if board.pits.(ii) > 0
-    then Some i
-    else (
-      print_endline "That pit is empty";
-      None)
-  | None -> None
-;;
-
-let rec game_loop board =
-  print_board board;
-  let c = get_move board in
-  match c with
-  | Quit ->
-    print_endline "Bye.";
-    exit 0
-  | _ ->
-    (match doable_move board (valid_move c) with
-     | Some index ->
-       let new_board = sow_seeds board index in
-       game_loop new_board
-     | None -> game_loop board)
+let doable_move board (move_index : int) : bool =
+  (* move_index is 0-5 *)
+  let actual_pit_index =
+    match board.player_turn with
+    | Player1 -> move_index
+    | Player2 -> move_index + 7
+  in
+  if actual_pit_index < 0 || actual_pit_index > 13 || index_is_store actual_pit_index
+  then false (* Invalid index range or trying to select a store *)
+  else board.pits.(actual_pit_index) > 0
 ;;

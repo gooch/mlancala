@@ -1,9 +1,9 @@
 (executable
  (name server)
  (modules server)
- (libraries mancala_lib unix))
+ (libraries mancala unix))
 
 (executable
  (name client)
  (modules client)
- (libraries mancala_lib unix))
+ (libraries mancala unix))

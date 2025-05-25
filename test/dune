@@ -1,3 +1,4 @@
 (test
  (name test_mancala)
- (libraries mancala_lib ounit2))
+ (modules test_mancala)
+ (libraries mancala ounit2))

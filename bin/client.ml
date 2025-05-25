@@ -137,8 +137,10 @@ let client_main server_ip port =
          (Printexc.to_string ex) (Printexc.get_backtrace ());
        game_running := false (* Ensure loop terminates on other errors *)
      finally
-       Printf.printf "Closing connection.\n";
-       safe_close_socket sock "client_socket"
+       begin
+         Printf.printf "Closing connection.\n";
+         safe_close_socket sock "client_socket"
+       end
     );
     Printf.printf "Client shutting down.\n"
 ;;

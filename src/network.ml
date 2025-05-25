@@ -1,4 +1,3 @@
-open Unix
 open Mancala
 
 type message =
@@ -49,8 +48,8 @@ let send_message (sock : Unix.file_descr) (msg : message) : (unit, string) resul
     send_all sock byte_data 0 len;
     Ok ()
   with
-  | Unix.Unix_error (err, func, arg) ->
-    Error (Printf.sprintf "Unix error in %s: %s(%s)" func (Unix.error_message err) arg)
+  | Unix.Unix_error (err, func, _arg) ->
+    Error (Printf.sprintf "Unix error in %s: %s(%s)" func (Unix.error_message err) _arg)
   | End_of_file -> Error "Connection closed by peer during send"
   | exn -> Error (Printf.sprintf "Failed to send message: %s" (Printexc.to_string exn))
 ;;
@@ -67,8 +66,8 @@ let receive_message (sock : Unix.file_descr) : (message, string) result =
       recv_all sock msg_bytes 0 len;
       bytes_to_message msg_bytes)
   with
-  | Unix.Unix_error (err, func, arg) ->
-    Error (Printf.sprintf "Unix error in %s: %s(%s)" func (Unix.error_message err) arg)
+  | Unix.Unix_error (err, func, _arg) ->
+    Error (Printf.sprintf "Unix error in %s: %s(%s)" func (Unix.error_message err) _arg)
   | End_of_file -> Error "Connection closed by peer during receive"
   | Failure s -> Error (Printf.sprintf "Receiving message failed: %s" s)
   | exn -> Error (Printf.sprintf "Failed to receive message: %s" (Printexc.to_string exn))
@@ -82,8 +81,8 @@ let setup_server (address_str : string) (port : int) : (Unix.file_descr, string)
     Unix.listen listen_socket 10; (* Backlog of 10 connections *)
     Ok listen_socket
   with
-  | Unix.Unix_error (err, func, arg) ->
-    Error (Printf.sprintf "Unix error in %s: %s(%s)" func (Unix.error_message err) arg)
+  | Unix.Unix_error (err, func, _arg) ->
+    Error (Printf.sprintf "Unix error in %s: %s(%s)" func (Unix.error_message err) _arg)
   | exn -> Error (Printf.sprintf "Failed to setup server: %s" (Printexc.to_string exn))
 ;;
 
@@ -92,8 +91,8 @@ let accept_connection (listen_socket : Unix.file_descr) : (Unix.file_descr * Uni
     let client_socket, client_addr = Unix.accept listen_socket in
     Ok (client_socket, client_addr)
   with
-  | Unix.Unix_error (err, func, arg) ->
-    Error (Printf.sprintf "Unix error in %s: %s(%s)" func (Unix.error_message err) arg)
+  | Unix.Unix_error (err, func, _arg) ->
+    Error (Printf.sprintf "Unix error in %s: %s(%s)" func (Unix.error_message err) _arg)
   | exn -> Error (Printf.sprintf "Failed to accept connection: %s" (Printexc.to_string exn))
 ;;
 
@@ -104,7 +103,7 @@ let connect_to_server (server_addr_str : string) (port : int) : (Unix.file_descr
     Unix.connect client_socket (Unix.ADDR_INET (server_addr, port));
     Ok client_socket
   with
-  | Unix.Unix_error (err, func, param) ->
+  | Unix.Unix_error (err, func, _param) ->
     Error (Printf.sprintf "Unix error connecting to server: %s (%s)" (Unix.error_message err) func)
   | exn -> Error (Printf.sprintf "Failed to connect to server: %s" (Printexc.to_string exn))
 ;;

@@ -1,4 +1,5 @@
 (library
  (name mancala_lib)
+ (public_name mancala)
  (modules mancala network)
  (libraries unix))
